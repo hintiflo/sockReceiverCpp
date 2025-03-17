@@ -29,18 +29,13 @@
 #include <unistd.h>
 
 using namespace std;
+#define INET_RX_BLOCKSIZE 4096
 
 class cppSocket
 {
 	public:
-		int listenerPort = -1;
-		int listenerFID = -1;
-		int clientFID = -1;
 		string localIP = "-1.-1.-1.-1";
-		
-		string sockIP = "";
-		int sockPort = -1;
-		char addrBuf[INET_ADDRSTRLEN];
+		int listenerPort = -1;
 		
 		// string localIP = "127.0.0.1";
 		cppSocket()
@@ -50,6 +45,15 @@ class cppSocket
 		
 		bool create()	// 1.)
 		{	listenerFID = socket(AF_INET, SOCK_STREAM, 0);
+			// bool options;
+			int flag =1;
+			if(	0 > setsockopt(listenerFID, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) ||
+				0 > setsockopt(listenerFID, SOL_SOCKET, SO_REUSEPORT, &flag, sizeof(int))	)
+				;
+				// options = false;
+			// else 
+				// options = true;
+
 			if(0 < listenerFID)
 				return true;
 			else 
@@ -73,12 +77,12 @@ class cppSocket
 
 			if(	0 > bind(listenerFID, (sockaddr*)&listenerAddress, sizeof(listenerAddress))	)
 			{	// cout << ERRO << "listener can't bind to " << sockIP << "|" << sockPort << endl  << EERO_POST;;
-				return -1;
+				return false;
 			}
 			return true;
 		}
 
-		bool listening()
+		bool listening()	// 3.)
 		{
 
 			if(	0 > listen(listenerFID, SOMAXCONN)	)
@@ -86,17 +90,60 @@ class cppSocket
 			return true;
 		}
 
-bool accept()
-{
-	
-	return true;
-}
+		bool accepting()
+		{
+			socklen_t clientAddrLen = sizeof(clientAddr);
+			if( 0 >  (clientFID = accept(listenerFID, (sockaddr * ) &clientAddr, &clientAddrLen))	)
+					return true;
 
+			closeListener();
+			clientPort = ntohs( clientAddr.sin_port);
+			clientIP = inet_ntop(AF_INET, &(clientAddr.sin_addr), addrBuf, INET_ADDRSTRLEN);
+
+			return true;
+		}
+
+		bool receiving(string * rxMsg)
+		{
+			char msgBuffer[INET_RX_BLOCKSIZE];
+			int rxCount = recv(clientFID, &msgBuffer, INET_RX_BLOCKSIZE, 0);		
+			if( 0 < rxCount )
+				{	*rxMsg = msgBuffer;
+					*rxMsg = (*rxMsg).erase((*rxMsg).find("\n") ,(*rxMsg).find("\n"));
+					// clean the RX buffer
+					memset(msgBuffer, 0, sizeof(msgBuffer));					
+					return true;
+				}
+			else 
+				return false;
+		}
+
+		bool sending(string txMsg)
+		{	char * msgBuff = (txMsg.append("\n")).data();
+			send(clientFID, msgBuff, strlen(msgBuff), 0);
+			return true;
+		}
+		
+		
 		void closeListener()		{	close(listenerFID);		}
 		void closeClient()			{	close(clientFID);		}	
 			
+		string getSockIP()			{	return sockIP;			}
+		int  getSockPort()		{	return sockPort;			}
+
+		string getClientIP()			{	return clientIP;			}
+		int  getClientPort()		{	return clientPort;			}
 	
 	private:
+		int clientFID = -1;
+		string rxMsg = "";
+		int listenerFID = -1;
+		string sockIP = "";
+		int sockPort = -1;
+		char addrBuf[INET_ADDRSTRLEN];
+		sockaddr_in clientAddr;
+		int clientPort = -1;
+		string clientIP = "";
 	
 	
 };
@@ -114,7 +161,6 @@ void signalException(int signal)
 	throw KeyExcept(signal);
 }
 
-#define INET_RX_BLOCKSIZE 4096
 #define INFO "[INFO] "
 #define ERRO "[ERRO] "
 #define WARN "[WARN] "
@@ -132,7 +178,6 @@ string serverStopMsg = "server out";
 int main(int argc, char ** argv)
 {
 	cppSocket sock;
-	// int client;
 
 	struct sigaction signalHandler;
 	signalHandler.sa_handler = signalException;
@@ -179,77 +224,35 @@ int main(int argc, char ** argv)
 			{	cout << ERRO << "socket could not be created" << endl << "    exiting program with error -1, goodbye!" << endl;
 				return -1;
 			}
-			int flag =1;
-			if(	0 > setsockopt(sock.listenerFID, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) ||
-				0 > setsockopt(sock.listenerFID, SOL_SOCKET, SO_REUSEPORT, &flag, sizeof(int))	)
-			{	cout << ERRO << "socket settings to make address and port reuseable failed." << endl << "    proceeding anyway." << endl;
-				// return -1;
-			}
-			cout << INFO << "socket created with FID: " << sock.listenerFID << endl;
-
-			// sockaddr_in listenerAddress;
-			// listenerAddress.sin_family = AF_INET;
-			// listenerAddress.sin_port = sock.listenerPort;
-
-			// sock.localIP = "127.0.0.1";
-			// // sock.localIP = "192.168.1.1";
-			// cout << TODO << " localIP restricted to locahorst\n";
-			// // cout << TODO << " Posrt readin incorrect\n";
-			// inet_pton(AF_INET, sock.localIP.c_str(), &listenerAddress.sin_addr);
 
 			// 2.) bind socket to adress/port
 			if( !sock.binding() )
-			{	cout << ERRO << "couldnt bind listener to " << sock.sockIP << "|" << sock.sockPort << endl  << EERO_POST;
+			{	cout << ERRO << "couldnt bind listener to " << sock.getSockIP() << "|" << sock.getSockPort() << endl  << EERO_POST;
 				return -1;
 			}	
-/*			char addrBuf[INET_ADDRSTRLEN];
-			string sockIP = inet_ntop(AF_INET, &listenerAddress.sin_addr, addrBuf, INET_ADDRSTRLEN);
-			int sockPort = ntohs(listenerAddress.sin_port);
-
-			if(	0 > bind(sock.listenerFID, (sockaddr*)&listenerAddress, sizeof(listenerAddress))	)
-			{	cout << ERRO << "listener can't bind to " << sockIP << "|" << sockPort << endl  << EERO_POST;
-				return -1;
-			}
-*/
-			// cout << INFO << "listener bound to " << sockIP << "|" << sockPort << endl;
 
 			// 3.) waiting for inbound connection
 			if( !sock.listening() )
-			// if(	0 > listen(sock.listenerFID, SOMAXCONN)	)
 			{	cout << ERRO << "listener can't be established" << endl <<  EERO_POST;;
 				return -1;
 			}
-			cout << INFO << "listener listening on " << sock.sockIP << "|" << sock.sockPort << endl;
+			cout << INFO << "listener listening on " << sock.getSockIP() << "|" << sock.getSockPort() << endl;
 
-			// 4.) accepting incoming connection
-			sockaddr_in clientAddr;
-			socklen_t clientAddrLen = sizeof(clientAddr);
-			if( 0 >  (sock.clientFID = accept(sock.listenerFID, (sockaddr * ) &clientAddr, &clientAddrLen))	)
+			if( !sock.accepting() )
 			{	cout << ERRO << "incoming connection could not be accpted" << EERO_POST;
 				return -1;
 			}
-			sock.closeListener();
-			// cout << TODO << "why close listener?\n";
-			
-			auto clientPort = ntohs( clientAddr.sin_port);
-			auto clientIP = inet_ntop(AF_INET, &clientAddr.sin_addr, sock.addrBuf, INET_ADDRSTRLEN);
-			cout << INFO << clientPortMsg << clientIP << "|" << clientPort << endl;
-
-			char msgBuffer[INET_RX_BLOCKSIZE];
-			int rxCount = 0;
+			cout << INFO << clientPortMsg << sock.getClientIP() << "|" << sock.getClientPort() << endl;
 
 			while(true)	// inner connected loop
 			{	// 5.) receive incoming messages
-				rxCount = recv(sock.clientFID, &msgBuffer, INET_RX_BLOCKSIZE, 0);		
-				if( 0 < rxCount )
-				{	string msg = msgBuffer;
-					cout << INFO << clientRxMsg << clientPort << ": " << msg.erase(msg.find("\n") ,msg.find("\n")) << endl;
+				string rxMsg = "";
+				if( sock.receiving( &rxMsg ) )
+				{	cout << INFO << clientRxMsg << sock.getClientPort() << ": " << rxMsg << endl;
 					// 6.) echo message back to the client
-					send(sock.clientFID, &(msgBuffer), rxCount, 0);				
-					// clean the RX buffer
-					memset(msgBuffer, 0, sizeof(msgBuffer));					
+					sock.sending(rxMsg);
 				}else
-				{	cout << INFO << clientGoneMsg << clientPort << endl;
+				{	cout << INFO << clientGoneMsg << sock.getClientPort() << endl;
 					break;
 				}
 			}	// inner connected loop
