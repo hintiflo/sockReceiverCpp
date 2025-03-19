@@ -7,6 +7,6 @@ only:
 	g++ sockReceiver.cpp cppSocket.cpp -o sockReceiver
 
 clean:
-	rm *.o
+	sockReceiver
 
 
