@@ -5,6 +5,7 @@
  *      Author: Florian Hinterleitner
  */
 
+#pragma once
 
 #include <iostream>
 #include <arpa/inet.h>

@@ -6,11 +6,11 @@
  */
 
 
+#include "gtest/gtest.h" 
 #include <iostream>
 #include <exception>
 #include <signal.h>
 #include <string.h>
-
 #include "cppSocket.h"
 
 using namespace std;
@@ -42,7 +42,8 @@ int main(int argc, char ** argv)
 	cppSocket sock;
 	// cout << socks.localIP;
 	// socks.create();
-
+	testing::InitGoogleTest(&argc, argv);
+	cout << RUN_ALL_TESTS();
 
 
 	struct sigaction signalHandler;
@@ -135,3 +136,23 @@ int main(int argc, char ** argv)
 	cout << INFO << serverStopMsg << endl;
 	return 0;
 }
+
+
+TEST(TestSuiteName, TestName)
+{
+	
+	ASSERT_EQ(23,23);
+	
+}
+
+TEST(TestSuiteName, TestName2)
+{
+	
+	ASSERT_EQ(24,24);
+	
+}
+	// TODO fix wrong read-in of port number
+	// TODO test cases, prametized
+	// TODO try gtest on 192.168.0.3
+	// TODO create dedicated test cpp files
+	// TODO create tutorial to install gtest on Debian and write basic tests
