@@ -4,12 +4,6 @@
  *  Created on: 12.01.2025
  *      Author: Florian Hinterleitner
  */
-// DONE fix wrong read-in of port number
-// TODO test cases, prametized
-// TODO try gtest on 192.168.0.3
-// TODO create dedicated test cpp files
-// TODO create tutorial to install gtest on Debian and write basic tests
-
 
 #include "gtest/gtest.h" 
 #include <iostream>
