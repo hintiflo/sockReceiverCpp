@@ -40,7 +40,7 @@ bool cppSocket::binding()	// 2.)
 {
 	sockaddr_in listenerAddress;
 	listenerAddress.sin_family = AF_INET;
-	listenerAddress.sin_port = listenerPort;
+	listenerAddress.sin_port = htons(listenerPort);
 
 	localIP = "127.0.0.1";
 	// sock.localIP = "192.168.1.1";
@@ -48,7 +48,7 @@ bool cppSocket::binding()	// 2.)
 
 	sockIP = inet_ntop(AF_INET, &listenerAddress.sin_addr, addrBuf, INET_ADDRSTRLEN);
 	sockPort = ntohs(listenerAddress.sin_port);
-
+	
 	if(	0 > bind(listenerFID, (sockaddr*)&listenerAddress, sizeof(listenerAddress))	)
 	{	return false;
 	}
@@ -92,16 +92,15 @@ bool cppSocket::receiving(string * rxMsg)
 }
 
 bool cppSocket::sending(string txMsg)
-{	char * msgBuff = (txMsg.append("\n")).data();
+{	char * msgBuff = (char *)(( txMsg.append("\n")).data());
 	send(clientFID, msgBuff, strlen(msgBuff), 0);
 	return true;
 }
 
-
-void cppSocket::closeListener()		{	close(listenerFID);		}
-void cppSocket::closeClient()			{	close(clientFID);		}	
-string cppSocket::getSockIP()			{	return sockIP;			}
-int  cppSocket::getSockPort()		{	return sockPort;			}
-string cppSocket::getClientIP()			{	return clientIP;			}
-int  cppSocket::getClientPort()		{	return clientPort;			}
+void 	cppSocket::closeListener()		{	close(listenerFID);			}
+void 	cppSocket::closeClient()		{	close(clientFID);			}	
+string 	cppSocket::getSockIP()			{	return sockIP;				}
+int  	cppSocket::getSockPort()		{	return sockPort;			}
+string 	cppSocket::getClientIP()		{	return clientIP;			}
+int  	cppSocket::getClientPort()		{	return clientPort;			}
 

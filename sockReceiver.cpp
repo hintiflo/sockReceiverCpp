@@ -4,6 +4,11 @@
  *  Created on: 12.01.2025
  *      Author: Florian Hinterleitner
  */
+// DONE fix wrong read-in of port number
+// TODO test cases, prametized
+// TODO try gtest on 192.168.0.3
+// TODO create dedicated test cpp files
+// TODO create tutorial to install gtest on Debian and write basic tests
 
 
 #include "gtest/gtest.h" 
@@ -28,6 +33,7 @@ void signalException(int signal)	{		throw KeyExcept(signal);	}
 #define WARN "[WARN] "
 #define DATA "[DATA] "
 #define TODO "[TODO] "
+#define TAST "[TEST] "
 #define EERO_POST endl << "    exiting program with error -1, goodbye!" << endl
 
 string clientGoneMsg = "client gone from port ";
@@ -38,13 +44,9 @@ string serverStopMsg = "server out";
 
 int main(int argc, char ** argv)
 {
-	// cppSocketet sock;
 	cppSocket sock;
-	// cout << socks.localIP;
-	// socks.create();
 	testing::InitGoogleTest(&argc, argv);
 	cout << RUN_ALL_TESTS();
-
 
 	struct sigaction signalHandler;
 	signalHandler.sa_handler = signalException;
@@ -59,28 +61,28 @@ int main(int argc, char ** argv)
 
 	// 0. Sanitize input values or set std values
 	if (argc < 2)
-	{	sock.localIP = "127.0.0.1";
-		sock.listenerPort = 10000;
-		cout << INFO << "no params given, IP: " << sock.localIP << ", port: " << sock.listenerPort << endl;
+	{	sock.setLocalIP("127.0.0.1");
+		sock.setListenerPort(10000);
+		cout << INFO << "no params given, IP: " << sock.getLocalIP() << ", port: " << sock.getListenerPort() << endl;
 	} 
 
 	if (argc == 2)
-	{	sock.localIP = "127.0.0.1";
+	{	sock.setLocalIP("127.0.0.1");
 		auto argv1 = argv[1];
-		sock.listenerPort = atoi( argv1 );
-		cout << INFO << "port param given, IP: " << sock.localIP << ", sock.listenerPort: " << sock.listenerPort << endl;
+		sock.setListenerPort( atoi( argv1 ));
+		cout << INFO << "port param given, IP: " << sock.getLocalIP() << ", sock.listenerPort: " << sock.getListenerPort() << endl;
 	}
 
 	if (argc == 3)
 	{	auto argv1 = argv[1];
 		auto argv2 = argv[2];
-		sock.localIP = argv1;
 
-		if("localhost" == sock.localIP)
-			sock.localIP  = "127.0.0.1";
+		sock.setLocalIP(argv1);
+		if("localhost" == argv1)
+			sock.setLocalIP("127.0.0.1");
 
-		sock.listenerPort = atoi( argv2 );
-		cout << INFO << "port param given, IP: " << sock.localIP << ", port: " << sock.listenerPort << endl;
+		sock.setListenerPort( atoi( argv2 ));
+		cout << INFO << "port param given, IP: " << sock.getLocalIP() << ", port: " << sock.getListenerPort() << endl;
 	}
 
 	try
@@ -138,21 +140,25 @@ int main(int argc, char ** argv)
 }
 
 
-TEST(TestSuiteName, TestName)
-{
-	
-	ASSERT_EQ(23,23);
-	
+TEST(cppSocket, initListener )
+{	cppSocket sock;
+	ASSERT_TRUE(sock.setListenerPort(54321));
+	ASSERT_TRUE(sock.setLocalIP("192.168.1.1"));
+	ASSERT_TRUE(sock.create());
+	ASSERT_TRUE(sock.binding());
+	// cout << TAST << "LocalIP " << sock.getLocalIP() << ", port: " << sock.getListenerPort() << endl;
+	ASSERT_TRUE(sock.listening());
 }
 
-TEST(TestSuiteName, TestName2)
+TEST(cppSocket, wrongPort)
 {
-	
-	ASSERT_EQ(24,24);
-	
+	// TODO: init sock with invalid port number
+	ASSERT_TRUE(false);
 }
-	// TODO fix wrong read-in of port number
-	// TODO test cases, prametized
-	// TODO try gtest on 192.168.0.3
-	// TODO create dedicated test cpp files
-	// TODO create tutorial to install gtest on Debian and write basic tests
+
+TEST(cppSocket, wrongIP)
+{
+	// TODO: init sock with invalid IP format
+	ASSERT_TRUE(false);
+}
+
