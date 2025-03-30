@@ -12,6 +12,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#define PORT_LOWER_LIM 0
+#define PORT_UPPER_LIM 65536
+
 using namespace std;
 
 class cppSocket
@@ -40,8 +43,13 @@ class cppSocket
 			return true;
 		};
 		bool	setListenerPort(int port)	
-		{	listenerPort = port;
-			return true;
+		{	if(	port > PORT_LOWER_LIM &&
+				port < PORT_UPPER_LIM
+			  )
+			{	listenerPort = port;
+				return true;
+			}else
+				return false;
 		};
 
 	private:

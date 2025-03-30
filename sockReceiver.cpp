@@ -5,6 +5,7 @@
  *      Author: Florian Hinterleitner
  */
 
+#define GTEST_LINKED_AS_SHARED_LIBRARY 1
 #include "gtest/gtest.h" 
 #include <iostream>
 #include <exception>
@@ -39,8 +40,6 @@ string serverStopMsg = "server out";
 int main(int argc, char ** argv)
 {
 	cppSocket sock;
-	testing::InitGoogleTest(&argc, argv);
-	cout << RUN_ALL_TESTS();
 
 	struct sigaction signalHandler;
 	signalHandler.sa_handler = signalException;
@@ -50,32 +49,37 @@ int main(int argc, char ** argv)
 
 
 	cout << "***************************************************" << endl;
-	cout << "    tcpReceiver, called with " << argc-1 << " args " << endl;
+	cout << "   tcp receiver, called with " << argc-1 << " args " << endl;
 	cout << "***************************************************" << endl;
 
 	// 0. Sanitize input values or set std values
-	if (argc < 2)
-	{	sock.setLocalIP("127.0.0.1");
-		sock.setListenerPort(10000);
-		cout << INFO << "no params given, IP: " << sock.getLocalIP() << ", port: " << sock.getListenerPort() << endl;
+	if (argc < 2)	// testcases only
+	{	// sock.setLocalIP("127.0.0.1");
+		// sock.setListenerPort(10000);
+		// cout << INFO << "no params given, IP: " << sock.getLocalIP() << ", port: " << sock.getListenerPort() << endl;
+
+		cout << INFO << "no params given, only gtest cases will be executed" << endl;
+		testing::InitGoogleTest(&argc, argv);
+		cout << RUN_ALL_TESTS();
+		return 0;
 	} 
 
-	if (argc == 2)
+	if (argc == 2)	// input taken as port number
 	{	sock.setLocalIP("127.0.0.1");
-		auto argv1 = argv[1];
-		sock.setListenerPort( atoi( argv1 ));
+		auto lPort = atoi(argv[1]);
+		sock.setListenerPort( lPort );
 		cout << INFO << "port param given, IP: " << sock.getLocalIP() << ", sock.listenerPort: " << sock.getListenerPort() << endl;
 	}
 
-	if (argc == 3)
+	if (argc == 3)	// input taken as IP and port number
 	{	auto argv1 = argv[1];
-		auto argv2 = argv[2];
+		auto lPort = atoi(argv[2]);
 
 		sock.setLocalIP(argv1);
 		if("localhost" == argv1)
 			sock.setLocalIP("127.0.0.1");
 
-		sock.setListenerPort( atoi( argv2 ));
+		sock.setListenerPort(lPort);
 		cout << INFO << "port param given, IP: " << sock.getLocalIP() << ", port: " << sock.getListenerPort() << endl;
 	}
 
@@ -133,26 +137,45 @@ int main(int argc, char ** argv)
 	return 0;
 }
 
-
-TEST(cppSocket, initListener )
+TEST(initTests, initListener )
 {	cppSocket sock;
 	ASSERT_TRUE(sock.setListenerPort(54321));
 	ASSERT_TRUE(sock.setLocalIP("192.168.1.1"));
 	ASSERT_TRUE(sock.create());
 	ASSERT_TRUE(sock.binding());
-	// cout << TAST << "LocalIP " << sock.getLocalIP() << ", port: " << sock.getListenerPort() << endl;
 	ASSERT_TRUE(sock.listening());
 }
 
-TEST(cppSocket, wrongPort)
-{
-	// TODO: init sock with invalid port number
-	ASSERT_TRUE(false);
+
+TEST(PortTests, validPortNumbers)
+{	// init sock with valid port number
+
+	cppSocket sock;
+    auto ports = std::vector<int>{1, 2, 3, 4321, 54321, (1 << 16)-1};
+    for (auto port :  ports) {
+        ASSERT_TRUE(sock.setListenerPort(port));
+    }
 }
 
-TEST(cppSocket, wrongIP)
-{
-	// TODO: init sock with invalid IP format
-	ASSERT_TRUE(false);
+TEST(PortTests, invalidPortNumbers)
+{	// init sock with invalid port number
+
+	cppSocket sock;
+    auto ports = std::vector<int>{-1, 0, (1 << 16), (1 << 16)+1, 100000};
+    for (auto port :  ports) {
+        ASSERT_FALSE(sock.setListenerPort(port));
+    }
 }
+
+// replaces previous case with parameterized test:
+class invalidPortTests :public ::testing::TestWithParam<int> {	protected:	cppSocket sock; };
+
+TEST_P(invalidPortTests, invalidPortTest) 
+{	int port = GetParam();
+	ASSERT_FALSE(	sock.setListenerPort(port)	);
+}
+
+INSTANTIATE_TEST_CASE_P(PortTests, invalidPortTests,
+	::testing::Values(-1, 0, (1 << 16), (1 << 16+1), 100000 )
+	);
 
