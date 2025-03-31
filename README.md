@@ -11,4 +11,14 @@ TODO: validate correct input format of IP addresses
 ## uses google C++ test framework
 * DONE parameterized port test cases
 * TODO create dedicated test cpp files
-* TODO create tutorial to install gtest on Debian and write basic tests
+
+## install gtest on a debian/raspberry
+####  according to https://stackoverflow.com/questions/13513905/how-to-set-up-googletest-as-a-shared-library-on-linux
+ 
+* wget https://github.com/google/googletest/releases/download/v1.16.0/googletest-1.16.0.tar.gz
+* tar xf googletest-1.16.0.tar.gz googletest-1.16.0/
+* cd googletest-1.16.0/
+* cmake -DBUILD_SHARED_LIBS=ON .
+* make
+* sudo make install
+* sudo ldconfig -v | grep gtest

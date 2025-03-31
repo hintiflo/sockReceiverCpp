@@ -167,7 +167,7 @@ TEST(PortTests, invalidPortNumbers)
     }
 }
 
-// replaces previous case with parameterized test:
+replaces previous case with parameterized test:
 class invalidPortTests :public ::testing::TestWithParam<int> {	protected:	cppSocket sock; };
 
 TEST_P(invalidPortTests, invalidPortTest) 
