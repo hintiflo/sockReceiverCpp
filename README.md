@@ -2,7 +2,9 @@
 
 An excercise in Cpp and socket programming
 
-A TCP-server, that listens on clients and prints incoming messages, providing a handy tool to observe packets sent from a TCP node.
+A TCP-server, that listens on clients and prints incoming messages to a console, providing a handy tool to observe packets sent from a TCP node.
+
+![](images/sockReceiverFlowChart.png)
 
 DONE: fix wrong read-in of port number
 
@@ -13,8 +15,7 @@ TODO: validate correct input format of IP addresses
 * TODO create dedicated test cpp files
 
 ## install gtest on a debian/raspberry
-####  according to https://stackoverflow.com/questions/13513905/how-to-set-up-googletest-as-a-shared-library-on-linux
- 
+* according to https://stackoverflow.com/questions/13513905/how-to-set-up-googletest-as-a-shared-library-on-linux
 * wget https://github.com/google/googletest/releases/download/v1.16.0/googletest-1.16.0.tar.gz
 * tar xf googletest-1.16.0.tar.gz googletest-1.16.0/
 * cd googletest-1.16.0/
